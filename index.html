@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="origin">
+    <title>Ora Player Relay</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; background: transparent; }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            border-radius: 12px;
+        }
+        .error {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #ccc;
+            font-family: sans-serif;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <iframe id="player"
+        allowfullscreen
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin">
+    </iframe>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const id = params.get('id');
+        const type = params.get('type') || 'video';
+        const source = params.get('source') || 'youtube';
+        const player = document.getElementById('player');
+
+        if (!id) {
+            document.body.innerHTML = '<div class="error">Nenhum vídeo especificado.</div>';
+        } else if (source === 'youtube') {
+            const base = 'https://www.youtube-nocookie.com/embed/';
+            if (type === 'playlist') {
+                player.src = `${base}videoseries?list=${encodeURIComponent(id)}&autoplay=1&controls=1&modestbranding=1&rel=0`;
+            } else {
+                player.src = `${base}${encodeURIComponent(id)}?autoplay=1&controls=1&modestbranding=1&rel=0`;
+            }
+        } else if (source === 'spotify') {
+            player.src = `https://open.spotify.com/embed/${encodeURIComponent(type)}/${encodeURIComponent(id)}?utm_source=generator&theme=0`;
+        } else {
+            document.body.innerHTML = '<div class="error">Fonte não suportada.</div>';
+        }
+    </script>
+</body>
+</html>
