@@ -104,10 +104,12 @@
                     if (ticket !== generation) return;
                     const playerVars = { rel: 0, playsinline: 1, origin: location.origin };
                     if (media.type === 'playlist') Object.assign(playerVars, { listType: 'playlist', list: media.id });
+                    // Playlist vai só em playerVars: a API rejeita a chave videoId
+                    // presente mesmo com valor undefined ("Invalid video id").
+                    const options = { host: 'https://www.youtube-nocookie.com', width: '100%', height: '100%' };
+                    if (media.type === 'video') options.videoId = media.id;
                     entry.player = new YT.Player(target, {
-                        host: 'https://www.youtube-nocookie.com',
-                        width: '100%', height: '100%',
-                        videoId: media.type === 'video' ? media.id : undefined,
+                        ...options,
                         playerVars,
                         events: {
                             onReady: () => entry === current && post('ready', { id: media.id, canNext }),
