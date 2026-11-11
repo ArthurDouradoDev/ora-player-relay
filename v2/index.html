@@ -16,18 +16,27 @@
     <script>
     // Relay v2 do Ora: toca YouTube e Spotify pelas APIs oficiais
     // (YouTube IFrame Player API e Spotify iFrame API) dentro de uma página
-    // https, porque os embeds não aceitam uma página chrome-extension:// como origem.
+    // https, porque os embeds não aceitam uma página de extensão como origem.
+    //
+    // URL: ?source&type&id&ora=sound[&parent=<origem da extensão>]
+    //   `parent` existe para o Firefox e o Safari, que podem não ter
+    //   location.ancestorOrigins; vale a primeira origem de extensão válida
+    //   entre ancestorOrigins[0] e `parent`.
     //
     // Protocolo (postMessage, sempre { oraRelay: 2, ... }):
     //   Ora → relay: { cmd: 'load', media: { source, type, id } } | 'play' | 'pause'
     //                | { cmd: 'volume', volume: 0–100 } | 'next'
     //   relay → Ora: { event: 'hello' } | { event: 'ready', id, canNext }
     //                | { event: 'state', id, paused } | { event: 'error', id, code }
-    // Só conversa com a extensão que embutiu a página.
+    // Só conversa com a extensão que embutiu a página: envia com
+    // postMessage(..., parentOrigin) (o navegador descarta se o pai tiver outra
+    // origem) e só aceita mensagens do pai com essa origem.
     (() => {
         const VERSION = 2;
-        const parentOrigin = location.ancestorOrigins?.[0] || '';
-        if (window.parent === window || !/^chrome-extension:\/\/[a-p]{32}$/.test(parentOrigin)) return;
+        const EXTENSION_ORIGIN = /^(chrome-extension:\/\/[a-p]{32}|moz-extension:\/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|safari-web-extension:\/\/[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})$/;
+        const parentOrigin = [location.ancestorOrigins?.[0], new URLSearchParams(location.search).get('parent')]
+            .find(origin => EXTENSION_ORIGIN.test(origin || ''));
+        if (window.parent === window || !parentOrigin) return;
 
         const slot = document.getElementById('slot');
         const SPOTIFY_TYPES = ['playlist', 'album', 'track'];
